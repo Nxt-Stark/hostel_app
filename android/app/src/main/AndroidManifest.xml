@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Add the CALL_PHONE permission here -->
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+
     <application
         android:label="hostel_app"
         android:name="${applicationName}"

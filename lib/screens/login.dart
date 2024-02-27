@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'dart:async';
 
 class LoginScreen extends StatefulWidget {
@@ -137,7 +135,75 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: isButtonEnabled
                         ? () async {
                             String phoneNumber = phoneNumberController.text;
-                            await sendOTP(context, phoneNumber); // Call the function to send OTP
+                            bool otpSent = await sendOTP(context, phoneNumber);
+                            if (otpSent) {
+                              // If OTP sent successfully, show alert and navigate to OTP verification page
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text(
+                                      "Done",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    content: Text(
+                                      "OTP Sent Successfully!",
+                                      style: GoogleFonts.poppins(),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    contentPadding: EdgeInsets.fromLTRB(25, 10, 10, 10),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                          // Navigate to OTP verification page
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => OtpScreen()),
+                                          );
+                                        },
+                                        child: Text("OK"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else {
+                              // If OTP not sent, show alert
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text(
+                                      "Error",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    content: Text(
+                                      "Failed to send OTP!",
+                                      style: GoogleFonts.poppins(),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    contentPadding: EdgeInsets.fromLTRB(25, 10, 10, 10),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text("OK"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
                           }
                         : null,
                     child: Container(
@@ -181,83 +247,53 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 
-Future<void> sendOTP(BuildContext context, String phoneNumber) async {
-  FirebaseAuth auth = FirebaseAuth.instance;
+Future<bool> sendOTP(BuildContext context, String phoneNumber) async {
+  // Send OTP logic goes here, using Firebase Authentication or any other method
+  // In this example, we're just simulating a delay of 5 seconds and returning true to indicate success
 
   // Show loading alert
   showDialog(
     context: context,
-    barrierDismissible: false, // prevent dismissing by tapping outside
+    barrierDismissible: false,
     builder: (BuildContext context) {
       return AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
-            Text("Sending OTP..."),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
-      );
-    },
-  );
-
-  // Send OTP
-  await auth.verifyPhoneNumber(
-    phoneNumber: '+91$phoneNumber',
-    verificationCompleted: (PhoneAuthCredential credential) {
-      // This function is called when the verification is completed automatically.
-      // It's typically used when the user's phone number is already trusted on the device.
-      // Since you only want to handle sending OTP without verification completion,
-      // you can leave this function empty.
-    },
-    verificationFailed: (FirebaseAuthException e) {
-      // Handle verification failed event here
-      // You can leave this function empty if you don't want to perform any action
-    },
-    codeSent: (String verificationId, int? resendToken) async {
-      // Dismiss loading alert
-      Navigator.of(context).pop();
-
-      // Show OTP sent successfully alert
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Alert"),
-            content: Text("OTP Sent Successfully!"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("OK"),
+        content: Padding(
+          padding: EdgeInsets.all(15),
+          child: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text(
+                "Sending OTP...",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                ),
               ),
             ],
-          );
-        },
-      );
-
-      // Navigate to OTP screen with verification ID
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OtpScreen(verificationId: verificationId),
+          ),
         ),
       );
     },
-    codeAutoRetrievalTimeout: (String verificationId) {
-      // Called when the automatic code retrieval has timed out
-    },
   );
+
+  // Simulate a delay of 5 seconds
+  await Future.delayed(Duration(seconds: 5));
+
+  // Dismiss loading alert
+  Navigator.of(context).pop();
+
+  // Simulate OTP sending success
+  return true;
 }
 
 
 
+
+
 class OtpScreen extends StatelessWidget {
-  final String verificationId;
-
-  OtpScreen({required this.verificationId});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,7 +333,7 @@ class OtpScreen extends StatelessWidget {
                             child: Center(
                               child: Text(
                                 "Login",
-                                style: TextStyle(
+                                style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: 40,
                                   fontWeight: FontWeight.bold,
@@ -319,7 +355,7 @@ class OtpScreen extends StatelessWidget {
                       children: <Widget>[
                         Text(
                           "Enter the OTP:",
-                          style: TextStyle(
+                          style: GoogleFonts.poppins(
                             color: Colors.grey[800],
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -360,7 +396,7 @@ class OtpScreen extends StatelessWidget {
                             child: Center(
                               child: Text(
                                 "Login",
-                                style: TextStyle(
+                                style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -381,7 +417,7 @@ class OtpScreen extends StatelessWidget {
                     child: Center(
                       child: Text(
                         "Made with love by Hadil",
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           color: Colors.grey,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -420,46 +456,48 @@ class OtpScreen extends StatelessWidget {
   }
 
   Widget buildOtpTextField(int index) {
-    return Container(
-      width: 50,
-      padding: EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Color.fromRGBO(143, 148, 251, 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(143, 148, 251, .2),
-            blurRadius: 20.0,
-            offset: Offset(0, 10),
-          ),
-        ],
+  return Container(
+    width: 60,
+    height: 70, // Adjust the width as needed
+    padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: Color.fromRGBO(143, 148, 251, 1),
       ),
-      child: TextField(
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(1),
-          FilteringTextInputFormatter.allow(RegExp(r'^[0-9]{0,1}$')),
-        ],
-        textAlign: TextAlign.center,
-        cursorColor: Colors.transparent,
-        style: TextStyle(
-          color: Colors.black,
+      boxShadow: [
+        BoxShadow(
+          color: Color.fromRGBO(143, 148, 251, .2),
+          blurRadius: 20.0,
+          offset: Offset(0, 10),
+        ),
+      ],
+    ),
+    child: TextField(
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        LengthLimitingTextInputFormatter(1),
+        FilteringTextInputFormatter.allow(RegExp(r'^[0-9]{0,1}$')),
+      ],
+      textAlign: TextAlign.center,
+      cursorColor: Colors.transparent,
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+      ),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        hintText: "-",
+        hintStyle: TextStyle(
+          color: const Color.fromARGB(66, 97, 97, 97),
           fontSize: 32,
           fontWeight: FontWeight.bold,
         ),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: "-",
-          hintStyle: TextStyle(
-            color: const Color.fromARGB(66, 97, 97, 97),
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
