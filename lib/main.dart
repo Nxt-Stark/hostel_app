@@ -939,7 +939,6 @@ SizedBox(height: 30),
 Row(
   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
   children: [
-    // First row of containers
     GestureDetector(
       onTap: () {
        Navigator.push(
