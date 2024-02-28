@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() => runApp(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: AddPage(),
-      ),
-    );
+void main() => runApp(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: AddPage(),
+    ));
 
 class AddPage extends StatefulWidget {
   @override
@@ -110,7 +106,7 @@ class _AddPageState extends State<AddPage> {
             ),
             TextButton(
               onPressed: () async {
-                await _saveDataToFirebase();
+                // Call function to save data to Firebase
                 Navigator.of(context).pop();
               },
               child: const Text("OK", style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold)),
@@ -119,23 +115,6 @@ class _AddPageState extends State<AddPage> {
         );
       },
     );
-  }
-
-  Future<void> _saveDataToFirebase() async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    CollectionReference students = firestore.collection('YOUR_COLLECTION_NAME');
-
-    await students.add({
-      'name': studentName,
-      'dob': _selectedDate != null ? DateFormat('dd/MM/yyyy').format(_selectedDate!) : null,
-      'mobileNumber': mobileNumber,
-      'college': selectedCollege,
-      'course': selectedCourse,
-      'parentsName': parentName,
-      'parentsMobile': parentMobile,
-      'address': address,
-      'roomNumber': roomNumber,
-    });
   }
 
   @override
@@ -165,19 +144,18 @@ class _AddPageState extends State<AddPage> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(24.0, 40.0, 24.0, 35.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                "Student Name:",
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[800],
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+        padding: EdgeInsets.fromLTRB(24.0, 40.0, 24.0, 35.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              "Student Name:",
+              style: GoogleFonts.poppins(
+                color: Colors.grey[800],
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
               ),
+            ),
               SizedBox(
                 height: 15,
               ),
@@ -445,28 +423,29 @@ class _AddPageState extends State<AddPage> {
                   ],
                 ),
                 child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: selectedCourse,
-                  icon: const Icon(Icons.arrow_downward, color: Color.fromRGBO(143, 148, 251, 1)),
-                  iconSize: 24,
-                  elevation: 16,
-                  style: const TextStyle(color: Colors.black),
-                  underline: Container(
-                    height: 2,
-                    color: Colors.transparent,
-                  ),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedCourse = newValue!;
-                    });
-                  },
-                  items: getCoursesForCollege(selectedCollege).map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
+  isExpanded: true,
+  value: selectedCourse,
+  icon: const Icon(Icons.arrow_downward, color: Color.fromRGBO(143, 148, 251, 1)),
+  iconSize: 24,
+  elevation: 16,
+  style: const TextStyle(color: Colors.black),
+  underline: Container(
+    height: 2,
+    color: Colors.transparent,
+  ),
+  onChanged: (String? newValue) {
+    setState(() {
+      selectedCourse = newValue!;
+    });
+  },
+  items: getCoursesForCollege(selectedCollege).map<DropdownMenuItem<String>>((String value) {
+    return DropdownMenuItem<String>(
+      value: value,
+      child: Text(value),
+    );
+  }).toList(),
+),
+
               ),
               SizedBox(
                 height: 20,
@@ -766,7 +745,6 @@ class _AddPageState extends State<AddPage> {
                 ),
               ),
             ],
-          ),
         ),
       ),
     );

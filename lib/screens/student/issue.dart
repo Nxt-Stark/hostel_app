@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hostel_app/main.dart';
+import 'package:hostel_app/screens/student.dart';
 
 class ReportIssueScreen extends StatelessWidget {
   @override
