@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hostel_app/screens/login.dart';
 import 'package:hostel_app/screens/admin/addstd.dart';
-import 'package:hostel_app/screens/student/leave.dart';
+import 'package:hostel_app/screens/admin/viewstd.dart';
 import 'package:hostel_app/screens/student/notification.dart';
 import 'package:hostel_app/screens/student/issue.dart';
 import 'package:hostel_app/screens/student/activityrep.dart';
@@ -203,7 +203,7 @@ Row(
       onTap: () {
        Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => LeaveRequestScreen()),
+              MaterialPageRoute(builder: (context) => ViewStudentDetails()),
             );
       },
       child: Container(
