@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hostel_app/screens/login.dart';
 import 'package:hostel_app/screens/admin/addstd.dart';
 import 'package:hostel_app/screens/admin/viewstd.dart';
+import 'package:hostel_app/screens/admin/upldphoto.dart';
 import 'package:hostel_app/screens/student/notification.dart';
 import 'package:hostel_app/screens/student/issue.dart';
 import 'package:hostel_app/screens/student/activityrep.dart';
@@ -203,7 +204,7 @@ Row(
       onTap: () {
        Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ViewStudentDetails()),
+              MaterialPageRoute(builder: (context) => ViewStudentPage()),
             );
       },
       child: Container(
@@ -488,7 +489,7 @@ Row(
       onTap: () {
        Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ReportIssueScreen()),
+              MaterialPageRoute(builder: (context) => UploadPhotoPage()),
             );
       },
       child: Container(
@@ -510,13 +511,13 @@ Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.report_problem_rounded,
+              Icons.photo_camera_rounded,
               size: 80,
               color: Color(0xff7364e3),
             ),
             SizedBox(height: 10),
             Text(
-              'Report Bug',
+              'Upload Profile',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

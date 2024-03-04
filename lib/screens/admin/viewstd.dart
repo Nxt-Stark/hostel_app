@@ -1,235 +1,337 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:google_fonts/google_fonts.dart';
 
-class ViewStudentDetails extends StatefulWidget {
+class ViewStudentPage extends StatefulWidget {
   @override
-  _ViewStudentDetailsState createState() => _ViewStudentDetailsState();
+  _ViewStudentPageState createState() => _ViewStudentPageState();
 }
 
-class _ViewStudentDetailsState extends State<ViewStudentDetails> {
-  String _searchedStudentId = '';
-  String _studentName = '';
-  String _studentId = '';
-  String _roomNumber = '';
-  String _phoneNumber = '';
-  String _imageUrl = '';
-  bool _isLoading = false;
+class _ViewStudentPageState extends State<ViewStudentPage> {
+  TextEditingController _searchController = TextEditingController();
+  String _searchId = '';
+  bool _searching = false;
 
-  final TextEditingController _searchController = TextEditingController();
-
-  Future<void> _searchStudent() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final QuerySnapshot<Map<String, dynamic>> queryResult =
-        await FirebaseFirestore.instance
-            .collection('student')
-            .where('studentId', isEqualTo: _searchedStudentId)
-            .get();
-
-    if (queryResult.docs.isNotEmpty) {
-      final data = queryResult.docs.first.data();
-      setState(() {
-        _studentName = data['studentName'] ?? '';
-        _studentId = data['studentId'] ?? '';
-        _roomNumber = data['roomNumber'] ?? '';
-        _phoneNumber = data['phoneNumber'] ?? '';
-        _imageUrl = data['imageUrl'] ?? '';
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _studentName = '';
-        _studentId = '';
-        _roomNumber = '';
-        _phoneNumber = '';
-        _imageUrl = '';
-        _isLoading = false;
-      });
-    }
+  Future<DocumentSnapshot?> _getStudentDetails(String id) async {
+    DocumentSnapshot? snapshot =
+        await FirebaseFirestore.instance.collection('student').doc(id).get();
+    return snapshot;
   }
 
-  void _showFullSizeImage() {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.network(_imageUrl),
-        ),
-      ),
-    );
+  Future<String> _getStudentImageURL(String id) async {
+    // Construct the path to the image in Firebase Storage using the student ID
+    String imagePath = 'student_images/$id.jpg'; // Assuming the images are stored with .jpg extension
+    // Get the download URL for the image
+    String downloadURL = await firebase_storage.FirebaseStorage.instance
+        .ref(imagePath)
+        .getDownloadURL();
+    return downloadURL;
   }
-
-void _editStudentDetails() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => EditStudentDetails(
-        studentId: _studentId,
-        studentName: _studentName,
-        roomNumber: _roomNumber,
-        phoneNumber: _phoneNumber,
-        imageUrl: _imageUrl,
-      ),
-    ),
-  ).then((value) {
-    if (value != null && value is Map<String, dynamic>) {
-      setState(() {
-        _studentName = value['studentName'] ?? '';
-        _roomNumber = value['roomNumber'] ?? '';
-        _phoneNumber = value['phoneNumber'] ?? '';
-        _imageUrl = value['imageUrl'] ?? '';
-      });
-      print('Updating student with ID: $_studentId');
-      // Check if the document exists before updating
-      FirebaseFirestore.instance
-          .collection('student')
-          .doc(_studentId)
-          .get()
-          .then((docSnapshot) {
-        if (docSnapshot.exists) {
-          print('Document exists. Updating details...');
-          FirebaseFirestore.instance
-              .collection('student')
-              .doc(_studentId)
-              .update({
-            'studentName': _studentName,
-            'roomNumber': _roomNumber,
-            'phoneNumber': _phoneNumber,
-            'imageUrl': _imageUrl,
-          }).then((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Student details updated successfully'),
-              ),
-            );
-          }).catchError((error) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to update student details: $error'),
-              ),
-            );
-          });
-        } else {
-          print('Document does not exist.');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Student document does not exist'),
-            ),
-          );
-        }
-      });
-    }
-  });
-}
-
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Details'),
+        backgroundColor: Color(0xFFF0F0F0),
+        toolbarHeight: 80.0,
+        leading: IconButton(
+          padding: EdgeInsets.all(20.0),
+          icon: Icon(
+            Icons.navigate_before_rounded, // Change to navigate_before
+            size: 35, // Adjust the size of the icon
+            color: Color(0xff7364e3), // Adjust the color of the icon
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navigate to the previous page
+          },
+        ),
+        title: Text(
+          'View Student Details',
+          style: GoogleFonts.poppins(
+            fontSize: 22, // Adjust the font size
+            fontWeight: FontWeight.bold, // Adjust the font weight
+            color: Color(0xff7364e3), // Adjust the text color
+          ),
+        ),
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: 'Search by Student ID',
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.search),
-                        onPressed: () {
-                          setState(() {
-                            _searchedStudentId = _searchController.text;
-                            _searchStudent();
-                          });
-                        },
-                      ),
-                    ),
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2), // Set shadow color
+                    spreadRadius: 3, // Set spread radius
+                    blurRadius: 10, // Set blur radius
+                    offset: Offset(0, 3), // Set offset
                   ),
-                  SizedBox(height: 20),
-                  _isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : _studentName.isNotEmpty
-                          ? Center(
-                              child: GestureDetector(
-                                onTap: _showFullSizeImage,
-                                child: CircleAvatar(
-                                  radius: 50,
-                                  backgroundImage: NetworkImage(_imageUrl),
-                                ),
-                              ),
-                            )
-                          : SizedBox.shrink(),
-                  SizedBox(height: 20),
-                  _isLoading
-                      ? SizedBox.shrink()
-                      : _studentName.isNotEmpty
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Name: $_studentName',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.edit),
-                                  onPressed: _editStudentDetails,
-                                ),
-                              ],
-                            )
-                          : SizedBox.shrink(),
-                  SizedBox(height: 10),
-                  _isLoading
-                      ? SizedBox.shrink()
-                      : _studentName.isNotEmpty
-                          ? Text(
-                              'Student ID: $_studentId',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                              ),
-                            )
-                          : SizedBox.shrink(),
-                  SizedBox(height: 10),
-                  _isLoading
-                      ? SizedBox.shrink()
-                      : _studentName.isNotEmpty
-                          ? Text(
-                              'Room Number: $_roomNumber',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                              ),
-                            )
-                          : SizedBox.shrink(),
-                  SizedBox(height: 10),
-                  _isLoading
-                      ? SizedBox.shrink()
-                      : _studentName.isNotEmpty
-                          ? Text(
-                              'Phone Number: $_phoneNumber',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                              ),
-                            )
-                          : SizedBox.shrink(),
                 ],
               ),
+              child: TextField(
+                controller: _searchController,
+    style: GoogleFonts.poppins(
+      // Replace 'YourFontFamily' with your desired font family
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF7364E3), // Adjust the text color
+    ),
+                decoration: InputDecoration(
+                  hintText: 'Search by Student ID',
+                  hintStyle: GoogleFonts.poppins(
+                      color: Colors.grey, fontSize: 16), // Hint text style
+                  border: InputBorder.none,
+                  prefixIcon: Icon(Icons.person_search_rounded,
+                  color: Color(0xff7364e3),),
+                  contentPadding: EdgeInsets.fromLTRB(20, 20, 20, 25),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      Icons.send_rounded,
+                      color: Color(0xff7364e3),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _searching = true;
+                        _searchId = _searchController.text;
+                      });
+                    },
+                  ),
+                ),
+              ),
             ),
+            SizedBox(height: 20.0),
+            _searching
+                ? FutureBuilder<DocumentSnapshot?>(
+                    future: _getStudentDetails(_searchId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else {
+                        if (snapshot.hasError) {
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else {
+                          if (snapshot.data == null ||
+                              !snapshot.data!.exists) {
+                            return Center(child: Text('Student not found'));
+                          } else {
+                            var studentData =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            return FutureBuilder<String>(
+                              future: _getStudentImageURL(_searchId),
+                              builder: (context, imageSnapshot) {
+                                if (imageSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                      child: CircularProgressIndicator());
+                                } else {
+                                  if (imageSnapshot.hasError) {
+                                    return Container();
+                                  } else {
+                                    String imageUrl = imageSnapshot.data!;
+                                    return GestureDetector(
+  onTap: () {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            width: 500,
+            height: 500,
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+            ),
+          ),
+        );
+      },
+    );
+  },
+  child: Center( // Wrapping with Center widget to center the container
+    child: Container(
+      width: 250,
+      height: 250, // Adjust the height as needed
+      decoration: BoxDecoration(
+        color: Colors.white, // Set background color to white
+        borderRadius: BorderRadius.circular(0), // Apply border radius
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.4),
+            spreadRadius: 3,
+            blurRadius: 5,
+            offset: Offset(10, 10),
+          ),
+        ],
+      ),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.scaleDown,
+        height: 200,
+      ),
+    ),
+  ),
+);
+
+                                  }
+                                }
+                              },
+                            );
+                          }
+                        }
+                      }
+                    },
+                  )
+                : Container(),
+            SizedBox(height: 20.0),
+            _searching
+                ? FutureBuilder<DocumentSnapshot?>(
+                    future: _getStudentDetails(_searchId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else {
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          if (snapshot.data == null ||
+                              !snapshot.data!.exists) {
+                            return Text('Student not found');
+                          } else {
+                            var studentData =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            return Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          '${studentData['name']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Color(0xFF7364E3),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.offline_pin_rounded, color: Color(0xFF7364E3),size: 20.0,),
+          onPressed: () {
+            // Implement functionality for editing student's name
+          },
+        ),
+      ],
+    ),
+                                SizedBox(height: 20.0),
+                                SizedBox(
+  width: double.infinity,
+  child: Container(
+    decoration: BoxDecoration(
+      color: Color(0xFFFFFFFF),
+      borderRadius: BorderRadius.circular(20.0),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.2),
+          spreadRadius: 3,
+          blurRadius: 10,
+          offset: Offset(0, 3), // changes position of shadow
+        ),
+      ],
+    ),
+    padding: EdgeInsets.all(30.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'DOB: ${studentData['dob']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Color(0xFF7364E3),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'College: ${studentData['college']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Color(0xFF7364E3),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'Course: ${studentData['course']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Color(0xFF7364E3),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'Parent Name: ${studentData['parentName']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Color(0xFF7364E3),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'Parent Mobile: ${studentData['parentMobile']}',
+          style: GoogleFonts.poppins(
+            color: Color(0xFF7364E3),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'Address: ${studentData['address']}',
+          style: GoogleFonts.poppins(
+            color: Color(0xFF7364E3),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'Room Number: ${studentData['roomNumber']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Color(0xFF7364E3),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 20.0),
+        Text(
+          'Mobile: ${studentData['mobile']}',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF7364E3),
+          ),
+        ),
+      ],
+    ),
+    
+  ),
+),
+
+                              ],
+                            );
+                          }
+                        }
+                      }
+                    },
+                  )
+                : Container(),
           ],
         ),
       ),
@@ -237,97 +339,8 @@ void _editStudentDetails() {
   }
 }
 
-class EditStudentDetails extends StatefulWidget {
-  final String studentId;
-  final String studentName;
-  final String roomNumber;
-  final String phoneNumber;
-  final String imageUrl;
-
-  const EditStudentDetails({
-    required this.studentId,
-    required this.studentName,
-    required this.roomNumber,
-    required this.phoneNumber,
-    required this.imageUrl,
-  });
-
-  @override
-  _EditStudentDetailsState createState() => _EditStudentDetailsState();
-}
-
-class _EditStudentDetailsState extends State<EditStudentDetails> {
-  late TextEditingController _nameController;
-  late TextEditingController _roomController;
-  late TextEditingController _phoneController;
-  late TextEditingController _imageController;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.studentName);
-    _roomController = TextEditingController(text: widget.roomNumber);
-    _phoneController = TextEditingController(text: widget.phoneNumber);
-    _imageController = TextEditingController(text: widget.imageUrl);
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _roomController.dispose();
-    _phoneController.dispose();
-    _imageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Edit Student Details'),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: 'Student Name'),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _roomController,
-              decoration: InputDecoration(labelText: 'Room Number'),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _phoneController,
-              decoration: InputDecoration(labelText: 'Phone Number'),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _imageController,
-              decoration: InputDecoration(labelText: 'Image URL'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  {
-                    'studentName': _nameController.text.trim(),
-                    'roomNumber': _roomController.text.trim(),
-                    'phoneNumber': _phoneController.text.trim(),
-                    'imageUrl': _imageController.text.trim(),
-                  },
-                );
-              },
-              child: Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+void main() {
+  runApp(MaterialApp(
+    home: ViewStudentPage(),
+  ));
 }
